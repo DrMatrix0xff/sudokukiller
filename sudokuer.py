@@ -22,20 +22,33 @@ class SudokuSolver(object):
         self.puzzle = puzzle
 
     def check_sudoku(self):
-        # TODO
+        for pos in range(81):
+            #print pos,
+            if self.puzzle[pos] == 0:
+                continue
+            else:
+                v = self.puzzle[pos]
+                if not self.__check_value(pos, v, initial_check=True):
+                    return False
         return True
 
-    def __check_value(self, pos, x):
+    def __check_value(self, pos, x, initial_check=False):
         line = pos / 9
         col = pos % 9
         box = (line / 3) * 3 + col / 3
         i = line * 9
         while i < (line+1) * 9:
+            if initial_check and i == pos:
+                i += 1
+                continue
             if self.puzzle[i] != 0 and self.puzzle[i] == x:
                 return False
             i += 1
         i = col
         while i <= (col + 72):
+            if initial_check and i == pos:
+                i += 9
+                continue
             if self.puzzle[i] != 0 and self.puzzle[i] == x:
                 return False
             i += 9
@@ -43,6 +56,8 @@ class SudokuSolver(object):
         i = topleft
         while i <= (topleft+20):
             for j in range(3):
+                if initial_check and (i+j) == pos:
+                    continue
                 if self.puzzle[i+j] != 0 and self.puzzle[i+j] == x:
                     return False
             i += 9
