@@ -26,6 +26,7 @@ class SudokuSolver(object):
     def __init__(self):
         self.puzzle = []
         self.stack = []
+        self.peercache = {}
         #self.counter = 0
 
     def set_sudoku(self, puzzle):
@@ -33,7 +34,6 @@ class SudokuSolver(object):
 
     def check_sudoku(self):
         for pos in range(81):
-            print pos,
             if self.puzzle[pos] == 0:
                 continue
             else:
@@ -43,27 +43,34 @@ class SudokuSolver(object):
         return True
 
     def __check_value(self, pos, x, initial_check=False):
-        line = pos / 9
-        col = pos % 9
-        box = (line / 3) * 3 + col / 3
-        row = ROWS[line]
-        column = COLUMNS[col]
-        boxbox = BOXES[box]
-        for i in row:
+        if pos not in self.peercache:
+            line = pos / 9
+            col = pos % 9
+            box = (line / 3) * 3 + col / 3
+            row = ROWS[line]
+            column = COLUMNS[col]
+            boxbox = BOXES[box]
+            self.peercache[pos] = set(row + column + boxbox)
+        for i in self.peercache[pos]:
             if initial_check and i == pos:
                 continue
             if self.puzzle[i] == x:
                 return False
-        for i in column:
-            if initial_check and i == pos:
-                continue
-            if self.puzzle[i] == x:
-                return False
-        for i in boxbox:
-            if initial_check and i == pos:
-                continue
-            if self.puzzle[i] == x:
-                return False
+        #for i in row:
+        #    if initial_check and i == pos:
+        #        continue
+        #    if self.puzzle[i] == x:
+        #        return False
+        #for i in column:
+        #    if initial_check and i == pos:
+        #        continue
+        #    if self.puzzle[i] == x:
+        #        return False
+        #for i in boxbox:
+        #    if initial_check and i == pos:
+        #        continue
+        #    if self.puzzle[i] == x:
+        #        return False
         return True
         #i = line * 9
         #while i < (line+1) * 9:
@@ -105,7 +112,7 @@ class SudokuSolver(object):
             i = 0
             while i < 81:
                 if self.puzzle[i] == 0:
-                    print '.',
+                    #print '.',
                     break
                 i += 1
             if i >= 81:
@@ -167,15 +174,24 @@ if __name__ == '__main__':
         #8,4,0, 0,0,0, 5,1,0,
         #5,0,9, 0,8,0, 0,4,7,
         #===================
-        0,0,0, 0,0,6, 0,0,0,
-        0,5,9, 0,0,0, 0,0,8,
-        2,0,0, 0,0,8, 0,0,0,
-        0,4,5, 0,0,0, 0,0,0,
-        0,0,3, 0,0,0, 0,0,0,
-        0,0,6, 0,0,3, 0,5,4,
-        0,0,0, 3,2,5, 0,0,6,
-        0,0,0, 0,0,0, 0,0,0,
-        0,0,0, 0,0,0, 0,0,0,
+        #0,0,0, 0,0,6, 0,0,0,
+        #0,5,9, 0,0,0, 0,0,8,
+        #2,0,0, 0,0,8, 0,0,0,
+        #0,4,5, 0,0,0, 0,0,0,
+        #0,0,3, 0,0,0, 0,0,0,
+        #0,0,6, 0,0,3, 0,5,4,
+        #0,0,0, 3,2,5, 0,0,6,
+        #0,0,0, 0,0,0, 0,0,0,
+        #0,0,0, 0,0,0, 0,0,0,
+        0,0,3, 0,0,0, 0,1,0,
+        0,1,0, 0,3,6, 7,0,0,
+        0,2,8, 0,0,5, 0,0,0,
+        0,0,0, 8,0,0, 5,3,0,
+        0,0,1, 6,0,0, 0,0,0,
+        0,0,0, 5,0,0, 6,7,0,
+        0,4,6, 0,0,7, 0,0,0,
+        0,3,0, 0,4,8, 9,0,0,
+        0,0,2, 0,0,0, 0,4,0,
     ])
     sdksolver.solve()
     sdksolver.show_solution()
