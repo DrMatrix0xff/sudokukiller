@@ -18,15 +18,15 @@ static int check(int puzzle[], int pos, int x)
     // calculate box number of which pos cell belongs to
     box = (line / 3) * 3 + col / 3;
     for (i = line * 9; i < (line+1) * 9; ++i)
-        if (x == puzzle[i] && puzzle[i] != 0)
+        if (x == puzzle[i])
             return 0;
     for (i = col; i <= col + 72; i += 9)
-        if (x == puzzle[i] && puzzle[i] != 0)
+        if (x == puzzle[i])
             return 0;
     topleft = (box / 3) * 27 + (box % 3) * 3;
     for (i = topleft; i <= topleft + 20; i += 9) {
         for (j = 0; j < 3; ++j)
-            if (x == puzzle[i+j] && puzzle[i+j] != 0)
+            if (x == puzzle[i+j])
                 return 0;
     }
     return 1;
