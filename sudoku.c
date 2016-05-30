@@ -113,8 +113,8 @@ static PyObject *sudoku_solve(PyObject *self, PyObject *args)
     if (solve(vec) == 0) {
         ob = PyList_New(len);
         for (i = 0; i < 81; ++i) {
-            o = Py_BuildValue("i", vec[i]);
-            if (PyList_SetItem(ob, (Py_ssize_t)i, o) < 0)
+            // o = Py_BuildValue("i", vec[i]);
+            if (PyList_SetItem(ob, (Py_ssize_t)i, Py_BuildValue("i", vec[i])) < 0)
                 goto failed;
         }
         return ob;
