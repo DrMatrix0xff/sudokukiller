@@ -6,6 +6,9 @@ typedef struct cell_ {
     int val;
 } cell;
 
+// error is set when procedure `solve` fails to find a solution.
+static PyObject *sudoku_err;
+
 static cell stack[81];
 static int spi;
 
@@ -57,10 +60,12 @@ static int solve(int puzzle[])
         if (v <= 9) {
             puzzle[i] = v;
             // how to cons a cell in C
-            stack[spi++] = (cell){.pos=i, .val=v};
+            stack[spi] = (cell){.pos=i, .val=v};
+            spi += 1;
         } else {
             while (spi > 0) {
-                c = stack[--spi];
+                spi -= 1;
+                c = stack[spi];
                 v = make_guess(puzzle, c.pos, c.val);
                 if (v <= 9) {
                     puzzle[c.pos] = v;
@@ -118,6 +123,9 @@ static PyObject *sudoku_solve(PyObject *self, PyObject *args)
                 goto failed;
         }
         return ob;
+    } else {
+        // solve(vec) == 1
+        PyErr_SetString(sudoku_err, "bad input puzzle");
     }
 
 failed:
@@ -130,10 +138,17 @@ static PyMethodDef SudokuMethods[] = {
     {NULL, NULL, 0, NULL}
 };
 
+
 PyMODINIT_FUNC
 initsudoku(void)
 {
-    (void) Py_InitModule("sudoku", SudokuMethods);
+    PyObject *m;
+    m = Py_InitModule("sudoku", SudokuMethods);
+    if (m == NULL)
+        return;
+    sudoku_err = PyErr_NewException("sudoku.error", NULL, NULL);
+    Py_INCREF(sudoku_err);
+    PyModule_AddObject(m, "error", sudoku_err);
 }
 
 // int main(int argc, char *argv[])
