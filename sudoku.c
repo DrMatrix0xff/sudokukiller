@@ -111,7 +111,7 @@ static PyObject *sudoku_solve(PyObject *self, PyObject *args)
         ob = PyList_GetItem(o, i);
         if ((n = PyInt_AS_LONG(ob)) == -1) {
             fprintf(stderr, "parse list item failed\n");
-            goto failed;
+            goto failure;
         }
         vec[i] = (int)n;
     }
@@ -120,7 +120,7 @@ static PyObject *sudoku_solve(PyObject *self, PyObject *args)
         for (i = 0; i < 81; ++i) {
             // o = Py_BuildValue("i", vec[i]);
             if (PyList_SetItem(ob, (Py_ssize_t)i, Py_BuildValue("i", vec[i])) < 0)
-                goto failed;
+                goto failure;
         }
         return ob;
     } else {
@@ -128,7 +128,7 @@ static PyObject *sudoku_solve(PyObject *self, PyObject *args)
         PyErr_SetString(sudoku_err, "bad input puzzle");
     }
 
-failed:
+failure:
     free(vec);
     return NULL;
 }
