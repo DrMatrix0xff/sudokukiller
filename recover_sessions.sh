@@ -19,6 +19,7 @@ recover_tmux_sessions()
             ${TMUXBIN} new-window -d -t "${SessionName}" -n "${WindowName}"
         else
             ${TMUXBIN} new-session -d -s "${SessionName}" -n "${WindowName}"
+            i=0
         fi
         sleep 0.5
         ${TMUXBIN} send-keys -t "${SessionName}:${i}.0" "cd ${PanePath}" ENTER
