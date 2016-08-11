@@ -1,7 +1,7 @@
 #include <python2.7/Python.h>
 #include <stdio.h>
 
-typedef struct cell_ {
+typedef struct cell__ {
     int pos;
     int val;
 } cell;

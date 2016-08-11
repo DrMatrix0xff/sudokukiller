@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+# default background color: #300a24
+# default text color: #839496
+
 from collections import namedtuple
 
 Entry = namedtuple('Entry', 'pos val')
