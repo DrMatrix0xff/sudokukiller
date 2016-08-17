@@ -1,5 +1,5 @@
-#include <python2.7/Python.h>
 #include <stdio.h>
+#include <Python.h>
 
 typedef struct cell__ {
     int pos;
