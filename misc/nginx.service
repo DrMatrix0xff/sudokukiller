@@ -1,0 +1,13 @@
+[Unit]
+Description=Http Server
+Requires=local-fs.target network.target
+
+[Service]
+Type=forking
+
+ExecStart=/usr/local/bin/nginx
+ExecStop=/usr/local/bin/nginx -s stop
+ExecReload=/usr/local/bin/nginx -s reload
+
+[Install]
+WantedBy=multi-user.target
