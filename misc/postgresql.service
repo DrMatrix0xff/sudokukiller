@@ -1,0 +1,16 @@
+[Unit]
+Description=Postgres SQL Relational Database
+Requires=local-fs.target network.target
+
+[Service]
+Type=forking
+User=postgres
+Group=postgres
+
+Environment=PGDATA=/var/lib/pgsql/data
+ExecStart=/usr/local/bin/pg_ctl start -D ${PGDATA} -w -s -l ${PGDATA}/serverlog
+ExecStop=/usr/local/bin/pg_ctl stop -D ${PGDATA} -s -m fast
+ExecReload=/usr/local/bin/pg_ctl reload -D ${PGDATA} -s
+
+[Install]
+WantedBy=multi-user.target
