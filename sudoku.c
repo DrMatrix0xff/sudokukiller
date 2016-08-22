@@ -58,13 +58,10 @@ static int solve(int puzzle[])
         v = make_guess(puzzle, i, 0);
         if (v <= 9) {
             puzzle[i] = v;
-            // how to cons a cell in C
-            stack[spi] = (cell){.pos=i, .val=v};
-            spi += 1;
+            stack[spi++] = (cell){.pos=i, .val=v};
         } else {
             while (spi > 0) {
-                spi -= 1;
-                c = stack[spi];
+                c = stack[--spi];
                 v = make_guess(puzzle, c.pos, c.val);
                 if (v <= 9) {
                     puzzle[c.pos] = v;
@@ -121,6 +118,7 @@ static PyObject *sudoku_solve(PyObject *self, PyObject *args)
             if (PyList_SetItem(ob, (Py_ssize_t)i, Py_BuildValue("i", vec[i])) < 0)
                 goto failure;
         }
+        free(vec);
         return ob;
     } else {
         // solve(vec) == 1
