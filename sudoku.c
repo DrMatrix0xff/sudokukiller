@@ -1,4 +1,5 @@
 #include <Python.h>
+#include <assert.h>
 
 typedef struct cell__ {
     int pos;
@@ -41,6 +42,33 @@ static int make_guess(int puzzle[], int pos, int b)
         if(check(puzzle, pos, i) != 0)
             return i;
     return i;
+}
+
+/* check if initial puzzle is valid */
+static int check_initial_puzzle(int puzzle[], int n) {
+    assert(n == 81);
+    int i, j, k, topleft;
+    int line, col, box;
+
+    for (i = 0; i < n; i++) {
+        if (puzzle[i] == 0)
+            continue;
+        line = i / 9;
+        col = i % 9;
+        box = (line / 3) * 3 + col / 3;
+        for (j = 9*line; j < 9*line+9; j++)
+            if ((j != i) && (puzzle[j] == puzzle[i]))
+                return 0;
+        for (j = col; j < 72+col; j += 9)
+            if ((j != i) && (puzzle[j] == puzzle[i]))
+                return 0;
+        topleft = (box / 3) * 27 + (box % 3) * 3;
+        for (j = topleft; j <= topleft+20; j += 9)
+            for (k = 0; k < 3; k++)
+                if (((j+k) != i) && (puzzle[i] == puzzle[j+k]))
+                    return 0;
+    }
+    return 1;
 }
 
 // return 0 when solved successfully, otherwise non-zero
@@ -111,6 +139,10 @@ static PyObject *sudoku_solve(PyObject *self, PyObject *args)
         }
         vec[i] = (int)n;
     }
+    if (! check_initial_puzzle(vec, 81)) {
+        PyErr_SetString(sudoku_err, "bad initial input puzzle");
+        goto failure;
+    }
     if (solve(vec) == 0) {
         ob = PyList_New(len);
         for (i = 0; i < 81; ++i) {
@@ -122,7 +154,7 @@ static PyObject *sudoku_solve(PyObject *self, PyObject *args)
         return ob;
     } else {
         // solve(vec) == 1
-        PyErr_SetString(sudoku_err, "bad input puzzle");
+        PyErr_SetString(sudoku_err, "It seems no proper solution");
     }
 
 failure:
@@ -143,7 +175,7 @@ initsudoku(void)
     m = Py_InitModule("sudoku", SudokuMethods);
     if (m == NULL)
         return;
-    sudoku_err = PyErr_NewException("sudoku.error", NULL, NULL);
+    sudoku_err = PyErr_NewException("sudoku.exception", NULL, NULL);
     Py_INCREF(sudoku_err);
     PyModule_AddObject(m, "error", sudoku_err);
 }
