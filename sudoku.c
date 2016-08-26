@@ -7,10 +7,7 @@ typedef struct cell__ {
 } cell;
 
 // error is set when procedure `solve` fails to find a solution.
-static PyObject *sudoku_err;
-
-static cell stack[81];
-static int spi;
+static PyObject *Exc_Check, *Exc_Solve;
 
 static int check(int puzzle[], int pos, int x)
 {
@@ -68,6 +65,7 @@ static int check_initial_puzzle(int puzzle[], int n) {
                 if (((j+k) != i) && (puzzle[i] == puzzle[j+k]))
                     return 0;
     }
+    fprintf(stderr, "initial check done\n");
     return 1;
 }
 
@@ -77,12 +75,15 @@ static int solve(int puzzle[])
     int i;
     int v;
     cell c;
+    cell stack[81] = {(cell){.pos=0, .val=0}};
+    int spi = 0;
     for ( ; ; ) {
         for (i = 0; i <= 80; ++i)
             if (puzzle[i] == 0)
                 break;
-        if (i >= 81)
+        if (i >= 81) {
             return 0;
+        }
         v = make_guess(puzzle, i, 0);
         if (v <= 9) {
             puzzle[i] = v;
@@ -100,7 +101,9 @@ static int solve(int puzzle[])
                     puzzle[c.pos] = 0;
             }
             if (spi <= 0) {
+#ifndef NDEBUG
                 fprintf(stderr, "bad input sudoku!\n");
+#endif
                 return 1;
             }
         }
@@ -117,6 +120,7 @@ static PyObject *sudoku_solve(PyObject *self, PyObject *args)
     long n;
     Py_ssize_t len;
     PyObject *ob = NULL, *o;
+    fprintf(stderr, "ref count of args: %d\n", (int)args->ob_refcnt);
     if (!PyArg_ParseTuple(args, "O", &o)) {
         fprintf(stderr, "parse args failed\n");
         return ob;
@@ -129,8 +133,11 @@ static PyObject *sudoku_solve(PyObject *self, PyObject *args)
         fprintf(stderr, "check list size failed\n");
         return ob;
     }
-    if ((vec = (int *)calloc(81, sizeof(int))) == NULL)
+    fprintf(stderr, "ref count of o: %d\n", (int)o->ob_refcnt);
+    if ((vec = (int *)calloc(81, sizeof(int))) == NULL) {
+        fprintf(stderr, "memory alloc failed\n");
         return ob;
+    }
     for (i = 0; i < 81; ++i) {
         ob = PyList_GetItem(o, i);
         if ((n = PyInt_AS_LONG(ob)) == -1) {
@@ -140,24 +147,36 @@ static PyObject *sudoku_solve(PyObject *self, PyObject *args)
         vec[i] = (int)n;
     }
     if (! check_initial_puzzle(vec, 81)) {
-        PyErr_SetString(sudoku_err, "bad initial input puzzle");
+        fprintf(stderr, "ref count of Exc_Check: %d\n", (int)Exc_Check->ob_refcnt);
+        PyErr_SetString(Exc_Check, "bad initial input puzzle");
         goto failure;
     }
     if (solve(vec) == 0) {
         ob = PyList_New(len);
+        if (! ob) {
+            fprintf(stderr, "build PyList failed\n");
+            goto failure;
+        }
         for (i = 0; i < 81; ++i) {
             // o = Py_BuildValue("i", vec[i]);
-            if (PyList_SetItem(ob, (Py_ssize_t)i, Py_BuildValue("i", vec[i])) < 0)
+            if (PyList_SetItem(ob, (Py_ssize_t)i, Py_BuildValue("i", vec[i])) < 0) {
+                fprintf(stderr, "build PyInt value failed\n");
                 goto failure;
+            }
         }
         free(vec);
+        fprintf(stderr, "ref count of ob: %d\n", (int)ob->ob_refcnt);
         return ob;
     } else {
         // solve(vec) == 1
-        PyErr_SetString(sudoku_err, "It seems no proper solution");
+        PyErr_SetString(Exc_Solve, "It seems no proper solution");
     }
 
 failure:
+    if (PyErr_Occurred()) {
+        fprintf(stderr, "PyErr Occurs\n");
+        // PyErr_Clear();
+    }
     free(vec);
     return NULL;
 }
@@ -175,9 +194,12 @@ initsudoku(void)
     m = Py_InitModule("sudoku", SudokuMethods);
     if (m == NULL)
         return;
-    sudoku_err = PyErr_NewException("sudoku.exception", NULL, NULL);
-    Py_INCREF(sudoku_err);
-    PyModule_AddObject(m, "error", sudoku_err);
+    Exc_Check = PyErr_NewException("sudoku.CheckException", NULL, NULL);
+    Exc_Solve = PyErr_NewException("sudoku.SolveException", NULL, NULL);
+    Py_INCREF(Exc_Check);
+    Py_INCREF(Exc_Solve);
+    PyModule_AddObject(m, "CheckException", Exc_Check);
+    PyModule_AddObject(m, "SolveException", Exc_Solve);
 }
 
 // int main(int argc, char *argv[])

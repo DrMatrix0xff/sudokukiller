@@ -46,6 +46,7 @@ problem = [
     0,0,2, 3,0,0, 8,0,0,
 ]
 
+print 'ref count of var problem:', sys.getrefcount(problem)
 non_zero_indice = []
 
 for i, v in enumerate(problem, 1):
@@ -56,6 +57,7 @@ redchar = '\x1b[31m'
 norchar = '\x1b[0m'
 
 a = sudoku.solve(problem)
+print 'ref count of var problem:', sys.getrefcount(problem)
 
 #print problem
 lsep = ' | '.join(['_' * 5] * 3) + '\n'
