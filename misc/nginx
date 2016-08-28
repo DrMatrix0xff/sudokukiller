@@ -1,0 +1,85 @@
+#! /bin/sh
+### BEGIN INIT INFO
+# Provides:		nginx
+# Required-Start:	$syslog $remote_fs
+# Required-Stop:	$syslog $remote_fs
+# Should-Start:		$local_fs
+# Should-Stop:		$local_fs
+# Default-Start:	2 3 4 5
+# Default-Stop:		0 1 6
+# Short-Description:	nginx - lightweight http server
+# Description:		nginx - HTTP server
+### END INIT INFO
+
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/usr/local/bin/nginx
+DAEMON_ARGS=/usr/local/nginx/conf/nginx.conf
+NAME=nginx
+DESC="web server"
+# USER=nginx
+
+PIDFILE=/usr/local/nginx/logs/nginx.pid
+
+test -x $DAEMON || exit 0
+
+. /lib/lsb/init-functions
+
+set -e
+
+start_server() {
+	#start-stop-daemon --start --quiet --exec $DAEMON -- -c $DAEMON_ARGS
+	$DAEMON
+}
+
+stop_server() {
+	$DAEMON -c $DAEMON_ARGS -s stop
+}
+
+case "$1" in
+  start)
+	log_daemon_msg "Starting $DESC" "$NAME"
+
+	if [ -n "$ULIMIT" ]
+	then
+		ulimit -n $ULIMIT
+	fi
+
+    start_server
+    log_end_msg $?
+	;;
+  stop)
+	log_daemon_msg "Stopping $DESC" "$NAME"
+	stop_server
+    log_end_msg $?
+	sleep 0.5
+	;;
+
+  reload|force-reload)
+	log_daemon_msg "Reloading $DESC" "$NAME"
+	$DAEMON -c $DAEMON_ARGS -s reload
+    log_end_msg $?
+	sleep 0.5
+	;;
+
+  restart)
+	log_daemon_msg "Restarting $DESC" "$NAME"
+    stop_server
+	sleep 0.5
+    start_server
+    log_end_msg $?
+    ;;
+
+  status)
+	start-stop-daemon --stop --quiet --signal 0 --name ${NAME} --pidfile ${PIDFILE} && \
+      log_success_msg "$NAME is running" || \
+      log_failure_msg "$NAME is not running"
+	;;
+
+  *)
+	echo "Usage: /etc/init.d/$NAME {start|stop|restart|force-reload|status}" >&2
+	exit 1
+	;;
+esac
+
+exit 0
