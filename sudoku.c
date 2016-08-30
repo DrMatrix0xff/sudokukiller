@@ -116,27 +116,29 @@ static int solve(int puzzle[])
 
 static PyObject *sudoku_solve(PyObject *self, PyObject *args)
 {
-    int i, *vec;
+    int i, *vec = NULL;
     long n;
     Py_ssize_t len;
     PyObject *ob = NULL, *o;
     fprintf(stderr, "ref count of args: %d\n", (int)args->ob_refcnt);
     if (!PyArg_ParseTuple(args, "O", &o)) {
         fprintf(stderr, "parse args failed\n");
-        return ob;
+        goto failure;
     }
     if (!PyList_Check(o)) {
         fprintf(stderr, "check list failed\n");
-        return ob;
+        PyErr_SetString(PyExc_TypeError, "value of list required");
+        goto failure;
     }
     if ((len = PyList_Size(o)) != (Py_ssize_t)81) {
         fprintf(stderr, "check list size failed\n");
-        return ob;
+        PyErr_SetString(PyExc_ValueError, "list too long or short");
+        goto failure;
     }
     fprintf(stderr, "ref count of o: %d\n", (int)o->ob_refcnt);
     if ((vec = (int *)calloc(81, sizeof(int))) == NULL) {
         fprintf(stderr, "memory alloc failed\n");
-        return ob;
+        goto failure;
     }
     for (i = 0; i < 81; ++i) {
         ob = PyList_GetItem(o, i);
@@ -169,7 +171,7 @@ static PyObject *sudoku_solve(PyObject *self, PyObject *args)
         return ob;
     } else {
         // solve(vec) == 1
-        PyErr_SetString(Exc_Solve, "It seems no proper solution");
+        PyErr_SetString(Exc_Solve, "no proper solution could be found");
     }
 
 failure:
@@ -177,7 +179,8 @@ failure:
         fprintf(stderr, "PyErr Occurs\n");
         // PyErr_Clear();
     }
-    free(vec);
+    if (vec != NULL)
+        free(vec);
     return NULL;
 }
 
