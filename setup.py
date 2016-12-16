@@ -4,6 +4,7 @@ module1 = Extension('sudoku',
         sources=['sudoku.c'],
         extra_compile_args = [
             '-I/usr/include/python2.7',
+            '-I/usr/local/include/python2.7',
         ],
 )
 
