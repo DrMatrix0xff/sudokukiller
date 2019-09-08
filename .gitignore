@@ -1,10 +1,5 @@
-*
-!LICENSE
-!README.md
-!*.c
-!*.py
-!misc
-!nginx
-!postgresql
-!*.sh
-!*.service
+*.lib
+*.pyd
+*.exp
+*.obj
+*.so*

@@ -1,0 +1,80 @@
+﻿1. APR Hooks
+	a) hook structure, a struct with various fields, each field is an dynamic array
+	b) calling ap_hook_name, register an entry to the hook structure
+	c) ap_run_name, run each registered function of hook name until some condition
+	d) source files apr_hooks.h apr_hooks.c
+	
+2. MPM (take worker for example)
+	a) children process are forked in ap_run_mpm
+	b) each child has 1 listerner thread, and many worker threads, maybe ThreadsPerChild
+	c) when there're no incoming requests, listerner thread is blocked in apr_pollset_poll, which is
+	   a wrapper against system poll mechanism, such as epoll, kqueue, while worker threads are blocked
+	   in ap_queue_pop_socket, because the fd_queue is empty
+	d) when there comes in a request, listerner thread will accept it, create an apr_socket_t object and
+	   a transaction pool associate with it, put it on the fd_queue, signal worker thread to process it
+	e) mpm_queue composes two parts, one of them is info_queue, for bookkeeping of worker state, i.e idle
+	   or busy,the other is fd_queue, whose elements are structures of connected socket and transaction pool.
+	f) worker thread calls process_socket to process the request, this should be the entry point of HTTP
+	   request.
+	g) source files main.c mpm/worker.c
+
+-----------------------------------------------------------------
+
+Process HTTP request:
+
+start point:
+process_socket  --|--->  ap_run_create_connection  (worker.c)
+                  |--->  ap_process_connection     (connection.c)
+
+core_create_conn hooks into create_connection HOOK
+
+core_create_conn (core.c)
+Allocate new conn_rec from transaction pool, setup its id, notes, local
+ip/address and client ip/address, conn_config
+
+The newly created conn_rec and accepted socket are passed to ap_process_connection
+ap_process_connection  --|--->ap_run_pre_connection
+                         |--->ap_run_process_connection
+
+core_pre_connection is hooked into pre_connection HOOK
+c is hooked into process_connection HOOK
+
+core_pre_connection (core.c)
+ap_process_http_connection (http_core.c)
+
+
+-----------------------------------------------------------------
+
+continued on July 28, 2019
+
+As for process_connection HOOK, reqtimeout_init(mod_reqtimeout.c) also hooks
+into it, and will be called before ap_process_http_connection, but will always
+return DECLINE
+
+Filter chain, filters are added in FIFO order
+ap_register_input_filter
+ap_register_output_filter
+
+ap_add_input_filter
+ap_add_output_filter
+
+
+(look up filter handle through registered name)
+ap_get_input_filter_handle
+ap_get_output_filter_handle
+
+ap_process_http_connection ---> ap_read_request(conn_rec *apc)
+ap_read_requet(server/protocol.c) new a request_rec object from conn_rec
+
+ap_read_request  --|---> ap_run_create_request
+                   |---> ap_run_pre_read_request
+
+ap_run_create_request 2 hook functions will be invoked:
+1. core_create_req(core.c)
+  allocate a new core_request_config object, set_core_module_config for current
+  request
+2. http_create_request(http_core.c)
+  add request and connection context for http filters if the request is new
+  created
+
+
